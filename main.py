@@ -1,2 +1,3 @@
-import os
-print(os.uname()[1])
+from app.bean_machine import BeanMachine
+
+BeanMachine().play_episode()
