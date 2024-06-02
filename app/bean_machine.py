@@ -10,7 +10,7 @@ from config import DIRECTORY, is_on_bean_machine
 
 if is_on_bean_machine():
     from RPLCD.i2c import CharLCD
-    from rpi_ws281x import PixelStrip
+    from rpi_ws281x import PixelStrip, Color
 else:
     class CharLCD:
         def __init__(self, **kwargs):
