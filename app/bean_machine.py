@@ -3,13 +3,14 @@ import json
 import random
 import time
 from typing import List, Optional
-from app.episode_downloader import EpisodeDownloader
-from pygame import mixer
-from config import DIRECTORY, is_on_bean_machine
 
+from pygame import mixer
+
+from config import DIRECTORY, is_on_bean_machine
 
 if is_on_bean_machine():
     from RPLCD.i2c import CharLCD
+    from rpi_ws281x import PixelStrip
 else:
     class CharLCD:
         def __init__(self, **kwargs):
@@ -20,6 +21,24 @@ else:
 
         def write_string(self, string_to_write: str):
             print('FAKE DISPLAY', string_to_write)
+
+    class Color:
+        def __init__(self, r: int, g: int, b: int):
+            pass
+
+    class PixelStrip:
+        def __init__(self, light_count: int, pin: int, frequency: int, dma: int, inverse: bool, brightness: int, channel: 0):
+            self.light_count: light_count = light_count
+
+        def numPixels(self):
+            return self.light_count
+
+        def setPixelColor(self, position, color: Color):
+            pass
+
+        def show(self):
+            pass
+
 
 
 class Episode:
@@ -78,6 +97,7 @@ class BeanDisplay:
             rows=4,
             dotsize=8
         )
+        self.light_wand: PixelStrip = PixelStrip(7, 12, 800000, 10, False, 255, 0)
         self.lines: list = ['', '', '', '']
         self.seconds_played: int = 0
         self.setup()
@@ -85,7 +105,14 @@ class BeanDisplay:
     def setup(self):
         self.lcd.clear()
         self.lines[0] = '--THE BEAN MACHINE--'
+        self.wipe(Color(255, 0, 0))
         self.set_display()
+
+    def wipe(self, color: Color, wait_ms=10):
+        for i in range(self.light_wand.numPixels()):
+            self.light_wand.setPixelColor(i, color)
+            self.light_wand.show()
+            time.sleep(wait_ms / 1000.0)
 
     def set_playing_episode(self, episode: Optional[Episode]):
         self.playing_episode = episode
@@ -116,6 +143,9 @@ class BeanDisplay:
         self.seconds_played = total_ticks
         self.lines[3] = '%s / %s' % (
             datetime.timedelta(seconds=total_ticks), datetime.timedelta(seconds=self.playing_episode.duration)
+        )
+        self.wipe(
+            Color(0, 255, 0) if total_ticks % 2 == 0 else Color(0, 0, 255)
         )
         self.set_display()
 
